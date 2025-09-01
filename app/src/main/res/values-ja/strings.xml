@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BLESampleC</string>
+    <string name="req_permission">権限要求</string>
+    <string name="wording_permission">\nこのアプリにはこの権限が必要なんです。あなたの許可をください。\nアプリ終了します。</string>
+    <string name="wording_permission_2times">\nアプリ終了します。\n今このアプリは\"表示しない\"設定になっていまして。\nアンインストールして、再インストールして下さい。</string>
+</resources>

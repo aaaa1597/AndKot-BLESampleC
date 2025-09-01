@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">BLESampleC</string>
+    <string name="req_permission">Permission Request</string>
+    <string name="wording_permission">\nThis app requires this permission. Please grant your approval.\nThe app will now close.</string>
+    <string name="wording_permission_2times">\nThe app will now close.\nIt is currently set to \"Do not show.\"\n\nPlease uninstall and reinstall the app.</string>
+</resources>
