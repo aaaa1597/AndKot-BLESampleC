@@ -3,4 +3,14 @@
     <string name="req_permission">Permission Request</string>
     <string name="wording_permission">\nThis app requires this permission. Please grant your approval.\nThe app will now close.</string>
     <string name="wording_permission_2times">\nThe app will now close.\nIt is currently set to \"Do not show.\"\n\nPlease uninstall and reinstall the app.</string>
+    <string name="failed_already_started">ALREADY STARTED.</string>
+    <string name="failed_data_too_large">DATA TOO LARGE.</string>
+    <string name="failed_feature_unsupported">FEATURE UNSUPPORTED.</string>
+    <string name="failed_internal_error">INTERNAL ERROR.</string>
+    <string name="failed_too_many_advertisers">TOO MANY ADVERTISERS.</string>
+    <string name="failed_scan_already_started">SCAN ALREADY STARTED</string>
+    <string name="failed_scan_application_registration_failed">APPLICATION REGISTRATION FAILED</string>
+    <string name="failed_scan_feature_unsupported">INTERNAL ERROR</string>
+    <string name="failed_scan_internal_error">FEATURE UNSUPPORTED</string>
+    <string name="failed_scan_out_of_hardware_resources">OUT OF HARDWARE RESOURCES</string>
 </resources>

@@ -4,4 +4,14 @@
     <string name="req_permission">権限要求</string>
     <string name="wording_permission">\nこのアプリにはこの権限が必要なんです。あなたの許可をください。\nアプリ終了します。</string>
     <string name="wording_permission_2times">\nアプリ終了します。\n今このアプリは\"表示しない\"設定になっていまして。\nアンインストールして、再インストールして下さい。</string>
+    <string name="failed_already_started">すでにアドバタイズが開始されている。</string>
+    <string name="failed_data_too_large">アドバタイズデータが31バイトを超えている。</string>
+    <string name="failed_feature_unsupported">デバイスがBLEアドバタイズをサポートしていない。</string>
+    <string name="failed_internal_error">内部エラー（原因不明）。</string>
+    <string name="failed_too_many_advertisers">同時に使えるアドバタイザーの数を超えている。</string>
+    <string name="failed_scan_already_started">スキャンがすでに開始されている。</string>
+    <string name="failed_scan_application_registration_failed">アプリの登録に失敗（Bluetoothスタックの内部エラー）。</string>
+    <string name="failed_scan_internal_error">原因不明の内部エラー。</string>
+    <string name="failed_scan_feature_unsupported">デバイスがBLEスキャンをサポートしていない。</string>
+    <string name="failed_scan_out_of_hardware_resources">スキャン用のハードウェアリソースが不足している。</string>
 </resources>

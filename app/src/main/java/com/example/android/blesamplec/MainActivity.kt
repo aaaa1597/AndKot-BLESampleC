@@ -37,7 +37,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.util.UUID
+import java.nio.charset.Charset
 
 const val PREFKEY_FIRST_LAUNCH = "PREFKEY_FIRST_LAUNCH"
 class MainActivity : AppCompatActivity() {
@@ -56,6 +56,14 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        /* String → ByteArray */
+        val text = "義経ああ"
+        val byteArray = text.toByteArray(Charset.forName("Shift_JIS"))
+        Log.d("aaaaa", "text(${text}) -> byteArray=${byteArray.joinToString(","){it.toString()}}")
+        /* ByteArray → String */
+        val text2 = byteArray.toString(Charset.forName("Shift_JIS"))
+        Log.d("aaaaa", "-> text2=${text2}")
 
         viewModel = ViewModelProvider(this)[BleViewModel::class.java]
         sharedPref = getPreferences(MODE_PRIVATE)
@@ -140,7 +148,37 @@ class MainActivity : AppCompatActivity() {
     private fun startScan() {
         val scanner = bluetoothAdapter.bluetoothLeScanner
         val callback = object : ScanCallback() {
+            override fun onScanFailed(errorCode: Int) {
+                /* エラーログ出力 */
+                when (errorCode) {
+                    SCAN_FAILED_ALREADY_STARTED                -> Log.e("aaaaa", "SCAN FAILED! ${getString(R.string.failed_scan_already_started)}")
+                    SCAN_FAILED_APPLICATION_REGISTRATION_FAILED-> Log.e("aaaaa", "SCAN FAILED! ${getString(R.string.failed_scan_application_registration_failed)}")
+                    SCAN_FAILED_FEATURE_UNSUPPORTED            -> Log.e("aaaaa", "SCAN FAILED! ${getString(R.string.failed_scan_feature_unsupported)}")
+                    SCAN_FAILED_INTERNAL_ERROR                 -> Log.e("aaaaa", "SCAN FAILED! ${getString(R.string.failed_scan_internal_error)}")
+                    SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES      -> Log.e("aaaaa", "SCAN FAILED! ${getString(R.string.failed_scan_out_of_hardware_resources)}")
+                    else -> Log.e("aaaaa", "SCAN FAILED! Unknown error")
+                }
+            }
+
             override fun onScanResult(type: Int, result: ScanResult) {
+                if(result.scanRecord==null) Log.d("aaaaa", "ScanRecord is null")
+                val scanResult = result.scanRecord ?: return
+                /* ServiceUUIDの確認 */
+                val serviceUUIDs = scanResult.serviceUuids
+                if(serviceUUIDs==null) Log.d("aaaaa", "serviceUUIDs is null")
+                if(serviceUUIDs?.contains(ParcelUuid.fromString("0000180A-0000-1000-8000-00805F9B34FB"))==false) {
+                    Log.d("aaaaa", "out of UUID=${serviceUUIDs}")
+                    return
+                }
+                Log.d("aaaaa", "Device info UUID found!")
+                /* manufacturerDataの確認 */
+                val manufacturerData = scanResult.getManufacturerSpecificData(0xFFFF)
+                if(manufacturerData == null) {
+                    Log.d("aaaaa", "out of manufacturerData=${scanResult.manufacturerSpecificData}")
+                    return
+                }
+                val decoded = manufacturerData.decodeToString().map { it.code.toChar() }.joinToString("")
+                Log.d("aaaaa", "decoded=${decoded}")
                 viewModel.addDevice(result.device)
             }
         }
@@ -149,8 +187,12 @@ class MainActivity : AppCompatActivity() {
         scanner.startScan(callback)
     }
     private fun startAdvertise() {
-        val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
-        val advertiser = bluetoothManager.adapter.bluetoothLeAdvertiser
+        val serviceUuid = ParcelUuid.fromString("0000180A-0000-1000-8000-00805F9B34FB")
+        val manufacturerID = 0xFFFF
+        val payload = byteArrayOf('a'.code.toByte(), 'b'.code.toByte(), 'c'.code.toByte(), 'd'.code.toByte(),
+                                  '1'.code.toByte(), '2'.code.toByte(), '3'.code.toByte(), '4'.code.toByte())
+        val advertiser = getSystemService(BluetoothManager::class.java).adapter.bluetoothLeAdvertiser
+
         val advertiseSettings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
@@ -158,14 +200,26 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val advertiseData = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
+            .addServiceUuid(serviceUuid)
+            .addManufacturerData(manufacturerID, payload)
             .setIncludeTxPowerLevel(true)
-            .addServiceUuid(ParcelUuid(UUID.fromString("f000aa00-0451-4000-b000-333322221111"))) // 例: Heart Rate Service
+            .setIncludeDeviceName(false)
             .build()
 
         advertiser.startAdvertising(advertiseSettings, advertiseData, object : AdvertiseCallback() {
+            override fun onStartFailure(errorCode: Int) {
+                /* エラーログ出力 */
+                when (errorCode) {
+                    ADVERTISE_FAILED_ALREADY_STARTED     -> Log.e("aaaaa", "FAILED! ${getString(R.string.failed_already_started)}")
+                    ADVERTISE_FAILED_DATA_TOO_LARGE      -> Log.e("aaaaa", "FAILED! ${getString(R.string.failed_data_too_large)}")
+                    ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> Log.e("aaaaa", "FAILED! ${getString(R.string.failed_feature_unsupported)}")
+                    ADVERTISE_FAILED_INTERNAL_ERROR      -> Log.e("aaaaa", "FAILED! ${getString(R.string.failed_internal_error)}")
+                    ADVERTISE_FAILED_TOO_MANY_ADVERTISERS-> Log.e("aaaaa", "FAILED! ${getString(R.string.failed_too_many_advertisers)}")
+                    else -> Log.e("aaaaa", "FAILED! Unknown error")
+                }
+            }
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                Log.d("aaaaa", "Advertising started")
+                Log.d("aaaaa", "Advertising started settings=${settingsInEffect}")
             }
         })
     }
