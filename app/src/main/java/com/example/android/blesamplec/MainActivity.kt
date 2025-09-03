@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.AdvertiseCallback
@@ -14,7 +15,6 @@ import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.ParcelUuid
@@ -37,12 +37,11 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.io.File
 import java.nio.charset.Charset
 
 const val PREFKEY_FIRST_LAUNCH = "PREFKEY_FIRST_LAUNCH"
 class MainActivity : AppCompatActivity() {
-    private lateinit var sharedPref: SharedPreferences
-
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var viewModel: BleViewModel
     private lateinit var adapter: BleDeviceAdapter
@@ -66,7 +65,6 @@ class MainActivity : AppCompatActivity() {
         Log.d("aaaaa", "-> text2=${text2}")
 
         viewModel = ViewModelProvider(this)[BleViewModel::class.java]
-        sharedPref = getPreferences(MODE_PRIVATE)
         bluetoothAdapter = (getSystemService(BLUETOOTH_SERVICE) as BluetoothManager).adapter
 
         val checkOK = checkPermissions()
@@ -108,22 +106,26 @@ class MainActivity : AppCompatActivity() {
         if(deniedPermissions.isEmpty())
             return true  /* 権限付与済 何もする必要ない */
 
-        val fstLaunch = sharedPref.getBoolean(PREFKEY_FIRST_LAUNCH, true)
+        val fstLaunch = isFirstLaunch(this)
+        Log.d("aaaaa", "(110) fstLaunch=${fstLaunch}")
         if(fstLaunch) {
+            Log.d("aaaaa", "(112) fstLaunch=${fstLaunch}")
             /* 未許可権限があれば許可要求 */
             permissionLauncher.launch(deniedPermissions.toTypedArray())
-            sharedPref.edit(commit=true) { putBoolean(PREFKEY_FIRST_LAUNCH, false)}
         }
         else {
+            Log.d("aaaaa", "(117) fstLaunch=${fstLaunch}")
             val rationaleNeeded = deniedPermissions.any { permission ->
                 ActivityCompat.shouldShowRequestPermissionRationale(this, permission)
             }
 
             if(rationaleNeeded) {
+                Log.d("aaaaa", "(123) fstLaunch=${fstLaunch} rationaleNeeded=${rationaleNeeded}")
                 /* 以前に拒否った */
                 permissionLauncher.launch(deniedPermissions.toTypedArray())
             }
             else {
+                Log.d("aaaaa", "(128) fstLaunch=${fstLaunch} rationaleNeeded=${rationaleNeeded}")
                 /* 以前に"非表示にした"ならアラートダイアログ → Shutdown */
                 PermissionDialogFragment.show(this, R.string.wording_permission_2times)
             }
@@ -241,6 +243,15 @@ class MainActivity : AppCompatActivity() {
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                 gatt.services.forEach {
                     Log.d("BLE", "Service: ${it.uuid}")
+                    it.characteristics.forEach { it ->
+                        val props = it.properties
+                        val isRead = props and BluetoothGattCharacteristic.PROPERTY_READ != 0
+                        val isWrite = props and BluetoothGattCharacteristic.PROPERTY_WRITE != 0
+                        val isNotify = props and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0
+                        val isWriteNoRes = props and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
+                        val isIndicate = props and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0
+                        Log.d("aaaaa", "    Characteristic: ${it.uuid} READ:$isRead WRITE:$isWrite NOTIFY:$isNotify WRITE_NO_RESPONSE:$isWriteNoRes INDICATE:$isIndicate")
+                    }
                 }
             }
         })
@@ -293,4 +304,15 @@ class PermissionDialogFragment(@StringRes private val redid: Int) : DialogFragme
             fragment.show(activity.supportFragmentManager, "PermissionDialog")
         }
     }
+}
+
+private fun isFirstLaunch(context: Context): Boolean {
+    val markerFile = File(context.noBackupFilesDir, "first_launch_marker")
+    return if(markerFile.exists()) {
+                false   /* Already launched */
+            }
+            else {
+                markerFile.createNewFile()  /* First launch, so create marker */
+                true
+            }
 }
