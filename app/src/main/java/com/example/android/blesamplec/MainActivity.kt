@@ -145,6 +145,7 @@ class MainActivity : AppCompatActivity() {
             PermissionDialogFragment.show(this, R.string.wording_permission)
         }
     }
+
     private fun startScan() {
         val scanner = bluetoothAdapter.bluetoothLeScanner
         val callback = object : ScanCallback() {
